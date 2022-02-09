@@ -8,15 +8,6 @@ db_filename = "campaigns.db"
 conn = sqlite3.connect(os.path.join("db", db_filename))
 cursor = conn.cursor()
 
-engine = create_engine(f"sqlite:///db\\{db_filename}")
-metadata = MetaData(bind=None)
-
-Campaigns = Table("campaigns", metadata, autoload=True, autoload_with=engine)
-
-table_mappings = {
-    "campaigns": Campaigns
-}  # для маппинга имен таблиц с экземлярами sqlalchemy.Table
-
 
 def __init_db():
     """Инициализирует БД"""
@@ -35,6 +26,18 @@ def __check_db_exists():
     if table_exists:
         return
     __init_db()
+
+
+__check_db_exists()
+
+engine = create_engine(f"sqlite:///db\\{db_filename}")
+metadata = MetaData(bind=None)
+
+Campaigns = Table("campaigns", metadata, autoload=True, autoload_with=engine)
+
+table_mappings = {
+    "campaigns": Campaigns
+}  # для маппинга имен таблиц с экземлярами sqlalchemy.Table
 
 
 def __is_valid(table_name: str, column_values=None) -> bool:
@@ -121,6 +124,3 @@ def insert(table_name: str, column_values: Dict):
         connection.close()
     else:
         print("Аргументы, переданные в функцию вставки в БД, не прошли валидацию")
-
-
-__check_db_exists()
