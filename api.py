@@ -1,12 +1,10 @@
 import requests
 import json
 from requests.exceptions import ConnectionError
-from time import sleep
-
+import sys
+import os
 
 #  Метод для корректной обработки строк в кодировке UTF-8 как в Python 3, так и в Python 2
-import sys
-
 if sys.version_info < (3,):
 
     def u(x):
@@ -29,7 +27,7 @@ else:
 CampaignsURL = "https://api.direct.yandex.com/json/v5/campaigns"
 
 # OAuth-токен пользователя, от имени которого будут выполняться запросы
-token = " AgAAAAAcmsdVAANksSnYBU3Vyka1njL7fNfx1f4"
+token = os.getenv("token")
 
 # --- Подготовка, выполнение и обработка запроса ---
 #  Создание HTTP-заголовков запроса
@@ -56,13 +54,6 @@ def get_campaigns():
     try:
         result = requests.post(CampaignsURL, jsonBody, headers=headers)
 
-        # Отладочная информация
-        print("Заголовки запроса: {}".format(result.request.headers))
-        print("Запрос: {}".format(u(result.request.body)))
-        print("Заголовки ответа: {}".format(result.headers))
-        print("Ответ: {}".format(u(result.text)))
-        print("\n")
-
         # Обработка запроса
         if result.status_code != 200 or result.json().get("error", False):
             print("Произошла ошибка при обращении к серверу API Директа.")
@@ -72,28 +63,21 @@ def get_campaigns():
             )
             print("RequestId: {}".format(result.headers.get("RequestId", False)))
         else:
-            print("RequestId: {}".format(result.headers.get("RequestId", False)))
-            print("Информация о баллах: {}".format(result.headers.get("Units", False)))
 
-            # Запись и вывод списка кампаний
-            campaigns = list()
-            for campaign in result.json()["result"]["Campaigns"]:
+            # Запись списка кампаний
+             campaigns = list()
+             for campaign in result.json()["result"]["Campaigns"]:
                 campaigns.append(
                     {"id": campaign["Id"], "company_name": u(campaign["Name"])}
                 )
-                print(
-                    "Рекламная кампания: {} №{}".format(
-                        u(campaign["Name"]), campaign["Id"]
-                    )
-                )
 
-            if result.json()["result"].get("LimitedBy", False):
+             if result.json()["result"].get("LimitedBy", False):
                 # Если ответ содержит параметр LimitedBy, значит,  были получены не все доступные объекты.
                 # В этом случае следует выполнить дополнительные запросы для получения всех объектов.
                 # Подробное описание постраничной выборки - https://tech.yandex.ru/direct/doc/dg/best-practice/get-docpage/#page
                 print("Получены не все доступные объекты.")
 
-            return campaigns
+             return campaigns
 
     # Обработка ошибки, если не удалось соединиться с сервером API Директа
     except ConnectionError:
